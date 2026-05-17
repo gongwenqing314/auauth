@@ -3,37 +3,25 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-AuAuth 是一个用于网关设备授权认证的 Python 库，支持 SM2/SM3 国密算法、许可证验证和 Telnet 授权流程。
+AuAuth 是一个用于网关设备授权认证的 Python 库，内置 SM2/SM3 国密算法、许可证验证和 Telnet 授权流程，开箱即用。
 
 ## 特性
 
 - 🔐 **国密算法支持**：SM2 加密/签名、SM3 哈希、SM4/AES 对称加密
 - 📜 **许可证验证**：支持 `.lic` 许可证文件解析和验证
 - 🔌 **Telnet 授权**：完整的 7 步网关授权流程
+- 🖥️ **GUI 界面**：内置授权管理图形界面
 - 🎯 **简单易用**：一行代码完成授权
 - 🛡️ **类型安全**：完整的类型注解支持
 - 📦 **零配置**：开箱即用，合理的默认值
+- 🔄 **独立使用**：无需额外依赖，所有核心模块已内置
 
 ## 安装
 
-### 前提条件
-
-本库依赖 [AuTool](https://github.com/gongwenqing314/AuTool) 核心模块，需要先安装。
-
-### 安装步骤
+### 快速安装
 
 ```bash
-# 步骤1: 安装 AuTool 核心模块（私有仓库需要认证）
-pip install git+https://github.com/gongwenqing314/AuTool.git
-
-# 步骤2: 安装 AuAuth
 pip install git+https://github.com/gongwenqing314/auauth.git
-```
-
-### 一行命令安装（推荐）
-
-```bash
-pip install git+https://github.com/gongwenqing314/AuTool.git git+https://github.com/gongwenqing314/auauth.git
 ```
 
 ### 开发模式安装
@@ -41,27 +29,16 @@ pip install git+https://github.com/gongwenqing314/AuTool.git git+https://github.
 ```bash
 # 克隆仓库
 git clone https://github.com/gongwenqing314/auauth.git
-git clone https://github.com/gongwenqing314/AuTool.git
+cd auauth
 
 # 开发模式安装
-cd AuTool && pip install -e .
-cd ../auauth && pip install -e .
+pip install -e .[dev]
 ```
 
-### 私有仓库访问
+### 安装可选 GUI 支持
 
-由于 AuTool 是私有仓库，安装时需要 GitHub 认证：
-
-**方式1：使用 Personal Access Token**
 ```bash
-# 生成Token: GitHub → Settings → Developer settings → Personal access tokens
-pip install git+https://<TOKEN>@github.com/gongwenqing314/AuTool.git
-```
-
-**方式2：使用 SSH**
-```bash
-# 配置SSH密钥后
-pip install git+ssh://git@github.com/gongwenqing314/AuTool.git
+pip install git+https://github.com/gongwenqing314/auauth.git[gui]
 ```
 
 ## 快速开始
@@ -148,6 +125,33 @@ except Exception as e:
     print(f"未知错误: {e}")
 ```
 
+### 直接使用核心模块
+
+```python
+from auauth import LicenseValidator, get_hardware_info, execute_gateway_auth
+
+# 验证许可证
+validator = LicenseValidator("license.lic")
+license_info = validator.validate()
+print(license_info)
+
+# 获取硬件信息
+hardware_info = get_hardware_info()
+print(hardware_info)
+
+# 执行网关授权
+result = execute_gateway_auth("192.168.10.1", license_info)
+```
+
+### 使用 GUI 界面
+
+```python
+from auauth.core.gui import run_gui
+
+# 启动图形管理界面
+run_gui()
+```
+
 ## 异常处理
 
 ```python
@@ -158,7 +162,6 @@ from auauth.exceptions import (
     AuthFlowError,      # 授权流程错误
     NetworkError,       # 网络错误
     CryptoError,        # 加密错误
-    ConfigError,        # 配置错误
 )
 
 try:
@@ -240,7 +243,23 @@ auauth/
 │   └── auauth/              # 库源码
 │       ├── __init__.py      # 公开API
 │       ├── api.py           # 主要接口实现
-│       └── exceptions.py    # 异常定义
+│       ├── exceptions.py    # 异常定义
+│       ├── assets/          # 资源文件（公钥等）
+│       └── core/            # 核心模块
+│           ├── __init__.py
+│           ├── config.yaml  # 配置文件
+│           ├── license.py   # 许可证验证
+│           ├── hardware.py  # 硬件信息获取
+│           ├── crypto/      # 加密模块
+│           │   ├── __init__.py
+│           │   ├── sm2_crypto.py    # SM2国密算法
+│           │   └── aes_crypto.py    # AES对称加密
+│           ├── gateway/     # 网关授权
+│           │   ├── __init__.py
+│           │   └── auth_processor.py
+│           └── gui/         # GUI界面
+│               ├── __init__.py
+│               └── main_window.py
 ├── tests/                   # 测试用例
 ├── docs/                    # 文档
 ├── examples/                # 使用示例
@@ -252,16 +271,38 @@ auauth/
 
 | 仓库 | 说明 |
 |------|------|
-| [AuTool](https://github.com/gongwenqing314/AuTool) | 核心模块（SM2加密、许可证验证、授权流程） |
-| [auauth](https://github.com/gongwenqing314/auauth) | 包装库（简化API、异常处理） |
+| [auauth](https://github.com/gongwenqing314/auauth) | 设备授权库 |
 
 ## 依赖
 
-- Python >= 3.8
+- Python >= 3.8 (支持 3.8 到 3.14)
 - gmssl >= 3.2.2 (SM2/SM3 国密算法)
 - pycryptodome >= 3.15.0 (AES 加密)
+- cryptography >= 41.0.0 (加密工具)
 - requests >= 2.28.0 (HTTP 请求)
 - psutil >= 5.9.0 (硬件信息获取)
+- PyYAML >= 6.0 (配置文件解析)
+- PyQt6 >= 6.0.0 (可选，GUI 界面)
+
+## 开发
+
+### 运行测试
+
+```bash
+pytest
+```
+
+### 代码格式化
+
+```bash
+black src/ tests/
+```
+
+### 类型检查
+
+```bash
+mypy src/
+```
 
 ## 许可证
 
