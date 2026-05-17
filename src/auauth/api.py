@@ -11,21 +11,16 @@ AuAuth 主要API模块
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from pathlib import Path
+import os
 
-# 导入autool_auth组件
-# AuTool 包需要先安装: pip install git+https://github.com/gongwenqing314/AuTool.git
-try:
-    from autool_auth.license import LicenseValidator, LicenseInfo
-    from autool_auth.gateway.auth_processor import (
-        GatewayAuthProcessor, 
-        AuthResult as _InternalAuthResult,
-        execute_gateway_auth as _execute_gateway_auth
-    )
-    from autool_auth.hardware import get_hardware_info
-    AUTOOL_AUTH_AVAILABLE = True
-except ImportError as e:
-    AUTOOL_AUTH_AVAILABLE = False
-    _import_error = e
+# 导入核心模块（内置在auauth包内）
+from .core.license import LicenseValidator, LicenseInfo
+from .core.gateway.auth_processor import (
+    GatewayAuthProcessor, 
+    AuthResult as _InternalAuthResult,
+    execute_gateway_auth as _execute_gateway_auth
+)
+from .core.hardware import get_hardware_info
 
 from .exceptions import (
     AuAuthError,
@@ -165,34 +160,24 @@ class AuthClient:
         
         Args:
             config: 授权配置对象
-        
-        Raises:
-            ConfigError: 配置无效
-            AuAuthError: autool_auth模块不可用
         """
-        if not AUTOOL_AUTH_AVAILABLE:
-            raise AuAuthError(
-                f"autool_auth模块不可用。请先安装AuTool:\n"
-                f"  pip install git+https://github.com/gongwenqing314/AuTool.git\n"
-                f"原始错误: {_import_error}"
-            )
-        
         self.config = config
-        self._processor: Optional[GatewayAuthProcessor] = None
-        self._license_info: Optional[LicenseInfo] = None
+        self._processor: Optional["GatewayAuthProcessor"] = None
+        self._license_info: Optional["LicenseInfo"] = None
     
-    def _load_license(self) -> LicenseInfo:
+    def _load_license(self) -> "LicenseInfo":
         """加载并验证许可证"""
         try:
-            validator = LicenseValidator(self.config.license_path)
-            license_info = validator.validate()
-            
-            if not license_info.is_valid:
+            public_key_path = self.config.public_key_path or os.path.join(os.path.dirname(__file__), "assets", "public_key.pem")
+            validator = LicenseValidator(public_key_path)
+            is_valid, license_info, error = validator.validate(self.config.license_path)
+
+            if not is_valid:
                 raise LicenseError(
-                    f"许可证验证失败: {license_info.error_message}",
+                    f"许可证验证失败: {error}",
                     self.config.license_path
                 )
-            
+
             return license_info
         except Exception as e:
             if isinstance(e, LicenseError):
@@ -219,8 +204,7 @@ class AuthClient:
             # 确定公钥路径
             public_key_path = self.config.public_key_path
             if public_key_path is None:
-                # 使用默认路径（相对于autool_auth）
-                public_key_path = "cmcc_license/public_key2.pem"
+                public_key_path = os.path.join(os.path.dirname(__file__), "assets", "public_key2.pem")
             
             # 执行授权
             internal_result = _execute_gateway_auth(

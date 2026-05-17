@@ -1,0 +1,17 @@
+# AuTool 授权工具配置文件
+
+# 网关配置
+gateway:
+  default_address: "192.168.1.1"  # 默认网关地址
+  default_port: "23"              # 默认端口
+
+# 授权配置
+auth:
+  default_admin_account: "CMCCAdmin"  # 默认管理员账号
+  default_admin_password: "aDm8H%MdA"  # 默认管理员密码
+
+# GUI配置
+gui:
+  window_title: "AuTool 授权工具"
+  window_width: 900
+  window_height: 700

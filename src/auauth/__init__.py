@@ -2,6 +2,7 @@
 AuAuth - 设备授权库
 
 用于网关设备的SM2/SM3授权认证，支持许可证验证和Telnet授权流程。
+只需安装一个包即可使用。
 
 基本用法:
     >>> from auauth import authorize_device
@@ -11,7 +12,6 @@ AuAuth - 设备授权库
     ... )
     >>> if result.success:
     ...     print(f"授权成功: {result.access_user}/{result.access_password}")
-    ...     # 使用result连接Telnet
 
 高级用法:
     >>> from auauth import AuthClient, AuthConfig
@@ -49,6 +49,15 @@ from .exceptions import (
     CryptoError,
 )
 
+# 核心模块（供高级用户直接使用）
+from .core.license import LicenseValidator, LicenseInfo
+from .core.gateway.auth_processor import (
+    GatewayAuthProcessor,
+    AuthResult as InternalAuthResult,
+    execute_gateway_auth,
+)
+from .core.hardware import get_hardware_info
+
 __all__ = [
     # 主要API
     "authorize_device",
@@ -61,4 +70,10 @@ __all__ = [
     "AuthFlowError",
     "NetworkError",
     "CryptoError",
+    # 核心模块
+    "LicenseValidator",
+    "LicenseInfo",
+    "GatewayAuthProcessor",
+    "execute_gateway_auth",
+    "get_hardware_info",
 ]
